@@ -1,4 +1,3 @@
--- plugins/noice.lua
 return {
     "folke/noice.nvim",
     event = "VeryLazy",
@@ -7,6 +6,12 @@ return {
             notify = {
                 backend = "notify"
             }
+        },
+        routes = {
+            {
+                view = "notify",
+                filter = { event = "msg_showmode" },
+            },
         },
     }
 }

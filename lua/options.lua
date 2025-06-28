@@ -40,7 +40,8 @@ local options = {
     splitright = false, -- オンのとき、ウィンドウを縦分割すると新しいウィンドウはカレントウィンドウの右に開かれる
     wrap = true,
     linebreak = true,
-    breakindent = true
+    breakindent = true,
+    termguicolors = true
 }
 
 vim.opt.shortmess:append("c")
@@ -52,3 +53,4 @@ end
 vim.cmd("set whichwrap+=<,>,[,],h,l")
 vim.cmd([[set iskeyword+=-]])
 vim.cmd([[set formatoptions-=cro]]) -- TODO: this doesn't seem to work
+vim.api.nvim_set_hl(0, "CursorLine", { bg = "#282C34", fg = "NONE" })

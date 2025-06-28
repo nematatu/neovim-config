@@ -14,14 +14,25 @@ return {
 
         local lspconfig = require("lspconfig")
         local capabilities = require("cmp_nvim_lsp").default_capabilities()
-        -- 条件関数（boolean を返すよう修正）
+
+        local on_attach = function(client)
+            vim.notify("LSP client attached: " .. client.name, vim.log.levels.INFO)
+            if client.name == "ts_ls" then
+                client.server_capabilities.document_formatting = false
+                client.server_capabilities.document_range_formatting = false
+            end
+        end
+
         local is_deno = function(fname)
             return lspconfig.util.root_pattern("deno.json", "deno.jsonc")(fname) ~= nil
         end
 
         require("mason-lspconfig").setup_handlers({
             function(server_name)
-                local opts = { capabilities = capabilities }
+                local opts = {
+                    capabilities = capabilities,
+                    on_attach = on_attach,
+                }
 
                 if server_name == "denols" then
                     opts.root_dir = lspconfig.util.root_pattern("deno.json", "deno.jsonc")

@@ -2,9 +2,17 @@ return {
     'akinsho/toggleterm.nvim',
     version = "*",
     config = function()
+        local on_open = function(term)
+            -- 要望①: ターミナル内で <C-t> を押すと、そのターミナルを閉じる
+            vim.keymap.set({ 'n', 't' }, '<C-t>', function()
+                require('toggleterm').toggle(term.id)
+            end, { buffer = term.bfr, silent = true, desc = "Close current terminal" })
+
+            vim.keymap.set('t', '<esc>', [[<C-\><C-n>]], { buffer = term.bfr, silent = true, desc = "Enter normal mode" })
+        end
+
         require("toggleterm").setup {
             size = 20,
-            open_mapping = [[<leader>tt]],
             hide_numbers = true,
             shade_filetypes = {},
             autochdir = false,
@@ -30,24 +38,40 @@ return {
                     return term.name
                 end
             },
+            on_open = on_open
         }
 
         local Terminal = require('toggleterm.terminal').Terminal
 
+        vim.keymap.set("n", "<leader>tt", "<cmd>ToggleTerm direction=float<CR>", { noremap = true, silent = true })
         -- Lazygit terminal
         local lazygit = Terminal:new({ cmd = "lazygit", hidden = true, direction = "float" })
         function _lazygit_toggle()
             lazygit:toggle()
         end
 
-        vim.api.nvim_set_keymap("n", "<leader>lg", "<cmd>lua _lazygit_toggle()<CR>", { noremap = true, silent = true })
-
         -- Diffview
-        function _diffview_toggle()
-            vim.cmd("DiffviewOpen")
+        local function _diffview_toggle()
+            -- 'filetype'が'DiffviewFiles'のウィンドウが存在するか確認
+            local diffview_open = false
+            for _, win in ipairs(vim.api.nvim_list_wins()) do
+                if vim.bo[vim.api.nvim_win_get_buf(win)].filetype == 'DiffviewFiles' then
+                    diffview_open = true
+                    break
+                end
+            end
+
+            if diffview_open then
+                -- Diffviewが開いていれば閉じる
+                vim.cmd("DiffviewClose")
+            else
+                -- Diffviewが閉じていれば開く
+                vim.cmd("DiffviewOpen")
+            end
         end
 
-        vim.api.nvim_set_keymap("n", "<leader>dv", "<cmd>lua _diffview_toggle()<CR>", { noremap = true, silent = true })
+        vim.keymap.set("n", "<leader>dv", _diffview_toggle, { noremap = true, silent = true, desc = "Toggle Diffview" })
+
 
         -- Bottom terminal（水平分割で開く）
         local bottom_term = Terminal:new({
@@ -61,10 +85,17 @@ return {
         end
 
         -- Insert と Normal 両モードで <leader>tb を有効化
-        vim.keymap.set({ "n", "i" }, "<leader>tb", function() _bottom_term_toggle() end,
+        vim.keymap.set({ "n" }, "<leader>tb", function() _bottom_term_toggle() end,
             { noremap = true, silent = true })
 
         -- Terminalモードから <ESC> でノーマルに戻る
         vim.keymap.set("t", "<ESC>", [[<C-\><C-n>]], { silent = true })
+
+        -- 新しいターミナルを連番で開くためのカウンター
+        local term_count = 1
+        vim.keymap.set("n", "<leader>tn", function()
+            term_count = term_count + 1
+            require("toggleterm").toggle(term_count, nil, nil, 'float')
+        end, { noremap = true, silent = true, desc = "Open new sequential terminal" })
     end
 }

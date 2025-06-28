@@ -22,7 +22,7 @@ require("lazy").setup({
         { import = "plugins.none-ls" },
         { import = "plugins.smoothcursor" },
         { import = "plugins.bufferline" },
-        -- { import = "plugins.telescope" },
+        { import = "plugins.telescope" },
         { import = "plugins.fidget" },
         { import = "plugins.gitblame" },
         { import = "plugins.gitsigns" },
@@ -52,12 +52,22 @@ require("lazy").setup({
         { import = "plugins.transparent" },
         { import = "plugins.accelerated-jk" },
         { import = "plugins.octo" },
+        { import = "plugins.discord" },
+        { import = "plugins.inc-rename" },
+        { import = "plugins.hop" },
+        { import = "plugins.registers" },
+        { import = "plugins.anywhare-reg" },
+        { import = "plugins.auto-session" },
+        { import = "plugins.capture" },
+        { import = "plugins.commitia" },
         {
             "sindrets/diffview.nvim",
             dependencies = "nvim-lua/plenary.nvim",
             cmd = { "DiffviewOpen", "DiffviewFileHistory" },
         },
-        -- 必要なプラグインをここで宣言
+        { import = "plugins.nvim-ts-autotag" },
+        { import = "plugins.octo" },
+
         { "nvim-lua/plenary.nvim" }, -- Common utilities
         { "windwp/nvim-ts-autotag" },
         {

@@ -15,7 +15,6 @@ keymap("n", "<C-j>", "<C-w>j", opts)
 keymap("n", "<C-k>", "<C-w>k", opts)
 keymap("n", "<C-l>", "<C-w>l", opts)
 
-keymap("n", "<leader>k", ":w<CR>", { noremap = true, silent = true })
 -- New tab
 keymap("n", "te", ":tabedit", opts)
 -- 新しいタブを一番右に作る
@@ -72,6 +71,22 @@ vim.api.nvim_create_autocmd("LspAttach", {
         vim.keymap.set('n', 'gf', '<cmd>lua vim.lsp.buf.formatting()<CR>')
         vim.keymap.set('n', 'gr', '<cmd>lua vim.lsp.buf.references()<CR>')
         vim.keymap.set('n', 'gd', '<cmd>lua vim.lsp.buf.definition()<CR>')
+
+        vim.keymap.set('n', '<leader>gd', function()
+            -- LSPに定義場所を問い合わせる
+            local params = vim.lsp.util.make_position_params()
+            vim.lsp.buf_request(ctx.buf, 'textDocument/definition', params, function(err, result)
+                -- エラーが発生したり、定義が見つからなかった場合は何もしない
+                if err or not result or vim.tbl_isempty(result) then
+                    print("Definition not found.")
+                    return
+                end
+
+                -- 定義が見つかった場合のみ、ウィンドウを垂直分割してジャンプする
+                vim.cmd('vsplit')
+                vim.lsp.util.jump_to_location(result[1])
+            end)
+        end, { noremap = true, silent = true, buffer = ctx.bufnr, desc = "Go to definition in vsplit" })
         vim.keymap.set('n', 'gD', '<cmd>lua vim.lsp.buf.declaration()<CR>')
         vim.keymap.set('n', 'gb', '<C-t>')
         vim.keymap.set('n', 'gi', '<cmd>lua vim.lsp.buf.implementation()<CR>')
@@ -116,3 +131,87 @@ vim.keymap.set("n", "<leader>dy", function()
 
     print("No diagnostic under cursor.")
 end, { desc = "Yank diagnostic under cursor" })
+
+-- 直前の文字を大文字にする
+vim.keymap.set("i", "<C-i>",
+    function()
+        local line = vim.fn.getline(".")
+        local col = vim.fn.getpos(".")[3]
+        local substring = line:sub(1, col - 1)
+        local result = vim.fn.matchstr(substring, [[\v<(\k(<)@!)*$]])
+        return "<C-w>" .. result:upper()
+    end,
+    { expr = true }
+)
+
+-- ciwでヤンクしない
+vim.keymap.set("n", "ci", '"_ci', opts)
+
+-- , ""をもう一個となりに作る
+
+vim.keymap.set("i", "<C-g>", function()
+    -- デバッグメッセージ
+    local esc_key = vim.api.nvim_replace_termcodes("<Esc>", false, false, true)
+    local left_key = vim.api.nvim_replace_termcodes("<Left>", false, false, true)
+    local sequence = esc_key .. "f\"a, \"\"" .. left_key
+
+    vim.fn.feedkeys(sequence, 'nt')
+
+    return ''
+end, opts)
+
+local copy_file_path = require('myscript.copy-relative-path')
+vim.keymap.set(
+    'n',
+    '<leader>cf',
+    copy_file_path.copy_relative_file_path,
+    { silent = true, noremap = true }
+)
+
+vim.keymap.set("n", "dd", function()
+    local line = vim.api.nvim_get_current_line()
+    if string.match(line, '^%s*$') then
+        vim.cmd('normal! "_dd')
+    else
+        vim.cmd('normal! dd')
+    end
+end, { noremap = true, silent = true })
+
+-- カーソル行の上に空行を挿入するユーザーコマンド
+vim.api.nvim_create_user_command(
+    'BlankAbove',
+    function()
+        local count = vim.v.count1 -- Luaで v:count1 の値を取得
+        -- repeat関数に渡す改行コードはnr2char(10)でVimscriptの関数として呼び出し、
+        -- countはLuaで取得した値を直接埋め込む。
+        -- あるいは、repeatもVimscriptの関数として呼び出す。
+        vim.cmd(string.format("put! =repeat(nr2char(10), %d)", count))
+        vim.cmd("normal! '[")
+    end,
+    { nargs = 0 }
+)
+
+-- カーソル行の下に空行を挿入するユーザーコマンド
+vim.api.nvim_create_user_command(
+    'BlankBelow',
+    function()
+        local count = vim.v.count1 -- Luaで v:count1 の値を取得
+        vim.cmd(string.format("put =repeat(nr2char(10), %d)", count))
+    end,
+    { nargs = 0 }
+)
+
+-- キーマッピングの設定 (この部分は変更不要)
+vim.api.nvim_set_keymap(
+    'n',
+    '<Space>o',
+    '<cmd>BlankBelow<CR>',
+    { noremap = true, silent = true, desc = "Insert blank lines below" }
+)
+
+vim.api.nvim_set_keymap(
+    'n',
+    '<Space>O',
+    '<cmd>BlankAbove<CR>',
+    { noremap = true, silent = true, desc = "Insert blank lines above" }
+)
