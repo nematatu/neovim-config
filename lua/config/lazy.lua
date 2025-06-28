@@ -59,7 +59,6 @@ require("lazy").setup({
         { import = "plugins.anywhare-reg" },
         { import = "plugins.auto-session" },
         { import = "plugins.capture" },
-        { import = "plugins.commitia" },
         {
             "sindrets/diffview.nvim",
             dependencies = "nvim-lua/plenary.nvim",

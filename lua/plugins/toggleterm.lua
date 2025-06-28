@@ -50,6 +50,8 @@ return {
             lazygit:toggle()
         end
 
+        vim.keymap.set("n", "<leader>lg", _lazygit_toggle, { noremap = true, silent = true })
+
         -- Diffview
         local function _diffview_toggle()
             -- 'filetype'が'DiffviewFiles'のウィンドウが存在するか確認
